@@ -20,28 +20,35 @@ class TwigThemeLoader implements ThemeLoaderInterface
      * @var PathsInterface The paths
      */
     private PathsInterface $paths;
-    
+
     /**
      * @var array The loaded themes
      */
     private array $themes = [];
-    
+
     /**
      * @var string|null The default theme name
      */
     private ?string $defaultTheme = null;
-    
+
+    /**
+     * @var array The theme settings
+     */
+    private array $settings = [];
+
     /**
      * Constructor.
      *
      * @param PathsInterface $paths The paths
+     * @param array $settings The theme settings
      */
-    public function __construct(PathsInterface $paths)
+    public function __construct(PathsInterface $paths, array $settings = [])
     {
         $this->paths = $paths;
+        $this->settings = $settings;
         $this->loadThemes();
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -50,10 +57,10 @@ class TwigThemeLoader implements ThemeLoaderInterface
         if (!$this->themeExists($themeName)) {
             throw new ThemeNotFoundException($themeName);
         }
-        
+
         return $this->themes[$themeName];
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -61,7 +68,7 @@ class TwigThemeLoader implements ThemeLoaderInterface
     {
         return array_values($this->themes);
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -70,10 +77,10 @@ class TwigThemeLoader implements ThemeLoaderInterface
         if ($this->defaultTheme === null) {
             throw new ThemeNotFoundException('default');
         }
-        
+
         return $this->themes[$this->defaultTheme];
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -81,7 +88,7 @@ class TwigThemeLoader implements ThemeLoaderInterface
     {
         return isset($this->themes[$themeName]);
     }
-    
+
     /**
      * Load all themes.
      *
@@ -91,13 +98,25 @@ class TwigThemeLoader implements ThemeLoaderInterface
     {
         $themesPath = $this->paths->getRootPath() . '/templates/themes';
         $themeDirectories = glob($themesPath . '/*', GLOB_ONLYDIR);
-        
+
+        // Get default theme from settings
+        $defaultTheme = $this->settings['default'] ?? 'default';
+
+        // Get available themes from settings
+        $availableThemes = $this->settings['available'] ?? [];
+
         foreach ($themeDirectories as $themeDirectory) {
             $themeName = basename($themeDirectory);
-            $isDefault = file_exists($themeDirectory . '/.default');
+
+            // Skip themes that are not in the available themes list
+            if (!empty($availableThemes) && !in_array($themeName, $availableThemes)) {
+                continue;
+            }
+
+            $isDefault = $themeName === $defaultTheme;
             $parentTheme = null;
             $config = [];
-            
+
             // Load theme configuration
             $configFile = $themeDirectory . '/theme.json';
             if (file_exists($configFile)) {
@@ -105,7 +124,7 @@ class TwigThemeLoader implements ThemeLoaderInterface
                 $parentTheme = $configData['parent'] ?? null;
                 $config = $configData;
             }
-            
+
             $theme = new TwigTheme(
                 $themeName,
                 $themeDirectory,
@@ -113,12 +132,24 @@ class TwigThemeLoader implements ThemeLoaderInterface
                 $parentTheme,
                 $config
             );
-            
+
             $this->themes[$themeName] = $theme;
-            
+
             if ($isDefault) {
                 $this->defaultTheme = $themeName;
             }
+        }
+
+        // If no default theme is set, use the first theme
+        if ($this->defaultTheme === null && !empty($this->themes)) {
+            $this->defaultTheme = array_key_first($this->themes);
+            $this->themes[$this->defaultTheme] = new TwigTheme(
+                $this->defaultTheme,
+                $this->themes[$this->defaultTheme]->getPath(),
+                true,
+                $this->themes[$this->defaultTheme]->getParentTheme(),
+                $this->themes[$this->defaultTheme]->getConfig()
+            );
         }
     }
 }
