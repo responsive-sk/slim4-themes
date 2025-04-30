@@ -33,7 +33,11 @@ $container->set(Slim4\Themes\Interface\ThemeInterface::class, function (Containe
 
 $container->set(Slim4\Themes\Interface\ThemeLoaderInterface::class, function (ContainerInterface $container) {
     return new Slim4\Themes\Twig\TwigThemeLoader(
-        $container->get(Slim4\Root\PathsInterface::class)
+        $container->get(Slim4\Root\PathsInterface::class),
+        [
+            'default' => 'default',
+            'available' => ['default', 'dark', 'blue', 'green', 'light']
+        ]
     );
 });
 
@@ -68,7 +72,8 @@ return [
 
     Slim4\Themes\Interface\ThemeLoaderInterface::class => function (ContainerInterface $container) {
         return new Slim4\Themes\Twig\TwigThemeLoader(
-            $container->get(Slim4\Root\PathsInterface::class)
+            $container->get(Slim4\Root\PathsInterface::class),
+            $container->get('settings')['theme'] ?? []
         );
     },
 
@@ -98,6 +103,7 @@ services:
         factory: Slim4\Themes\Twig\TwigThemeLoader
         arguments:
             paths: @Slim4\Root\PathsInterface
+            settings: %theme%
         tags: [theme]
 
     Slim4\Themes\Interface\ThemeRendererInterface:
@@ -133,7 +139,9 @@ class HomeController
             'content' => 'Welcome to the home page!',
         ];
 
-        return $this->themeRenderer->renderResponse($response, 'home.twig', $data);
+        $html = $this->themeRenderer->render('home.twig', $data);
+        $response->getBody()->write($html);
+        return $response;
     }
 }
 ```
@@ -238,7 +246,7 @@ class CustomTheme implements ThemeInterface
 
     public function getTemplatesPath(): string
     {
-        return $this->path . '/templates';
+        return $this->path;
     }
 
     public function getConfig(): array

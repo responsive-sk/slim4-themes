@@ -27,39 +27,39 @@ $containerBuilder->addDefinitions([
             {
                 return __DIR__;
             }
-            
+
             public function getConfigPath(): string
             {
                 return __DIR__ . '/config';
             }
-            
+
             public function getPublicPath(): string
             {
                 return __DIR__ . '/public';
             }
-            
+
             public function getVarPath(): string
             {
                 return __DIR__ . '/var';
             }
-            
+
             public function getTempPath(): string
             {
                 return __DIR__ . '/var/tmp';
             }
-            
+
             public function getCachePath(): string
             {
                 return __DIR__ . '/var/cache';
             }
-            
+
             public function getLogPath(): string
             {
                 return __DIR__ . '/var/log';
             }
         };
     },
-    
+
     // Themes
     ThemeInterface::class => function (ContainerInterface $container) {
         return new TwigTheme(
@@ -68,13 +68,17 @@ $containerBuilder->addDefinitions([
             true
         );
     },
-    
+
     ThemeLoaderInterface::class => function (ContainerInterface $container) {
         return new TwigThemeLoader(
-            $container->get(PathsInterface::class)
+            $container->get(PathsInterface::class),
+            [
+                'default' => 'default',
+                'available' => ['default', 'dark']
+            ]
         );
     },
-    
+
     ThemeRendererInterface::class => function (ContainerInterface $container) {
         return new TwigThemeRenderer(
             $container->get(ThemeInterface::class),
@@ -99,24 +103,28 @@ $app->add(new ThemeMiddleware(
 // Add routes
 $app->get('/', function ($request, $response) use ($container) {
     $themeRenderer = $container->get(ThemeRendererInterface::class);
-    
+
     $data = [
         'title' => 'Home',
         'content' => 'Welcome to the home page!',
     ];
-    
-    return $themeRenderer->renderResponse($response, 'home.twig', $data);
+
+    $html = $themeRenderer->render('home.twig', $data);
+    $response->getBody()->write($html);
+    return $response;
 })->setName('home');
 
 $app->get('/about', function ($request, $response) use ($container) {
     $themeRenderer = $container->get(ThemeRendererInterface::class);
-    
+
     $data = [
         'title' => 'About',
         'content' => 'This is the about page.',
     ];
-    
-    return $themeRenderer->renderResponse($response, 'about.twig', $data);
+
+    $html = $themeRenderer->render('about.twig', $data);
+    $response->getBody()->write($html);
+    return $response;
 })->setName('about');
 
 // Run app

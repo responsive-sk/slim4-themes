@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Slim4 Themes (Dark)</title>
+    <link rel="stylesheet" href="{{ theme.assetsPath }}/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>Slim4 Themes (Dark)</h1>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('home') }}">Home</a></li>
+                <li><a href="{{ url_for('about') }}">About</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <footer>
+        <p>&copy; {{ "now"|date("Y") }} Slim4 Themes</p>
+    </footer>
+    
+    <script src="{{ theme.assetsPath }}/js/script.js"></script>
+</body>
+</html>
