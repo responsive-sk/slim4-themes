@@ -62,19 +62,19 @@ use Psr\Http\Message\ServerRequestInterface;
 class HomeController
 {
     private ThemeRendererInterface $themeRenderer;
-    
+
     public function __construct(ThemeRendererInterface $themeRenderer)
     {
         $this->themeRenderer = $themeRenderer;
     }
-    
+
     public function index(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         $data = [
             'title' => 'Home',
             'content' => 'Welcome to the home page!',
         ];
-        
+
         return $this->themeRenderer->renderResponse($response, 'home.twig', $data);
     }
 }
@@ -83,6 +83,27 @@ class HomeController
 ## Documentation
 
 For more detailed documentation, see the [docs](docs) directory.
+
+## Examples
+
+Check out the [examples](examples) directory for working examples:
+
+- [Basic Usage](examples/basic-usage.php) - A simple example of how to use the package with Twig.
+
+To run the examples, you need to install the package and its dependencies:
+
+```bash
+composer install
+```
+
+Then, you can run the examples using PHP's built-in web server:
+
+```bash
+cd examples
+php -S localhost:8000 basic-usage.php
+```
+
+Then, open your browser and navigate to http://localhost:8000.
 
 ## License
 
