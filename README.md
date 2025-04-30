@@ -13,7 +13,7 @@ A flexible theme system for Slim 4 applications.
 ## Installation
 
 ```bash
-composer require slim4/themes
+composer require slim4-framework/themes
 ```
 
 ## Usage
