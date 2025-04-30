@@ -11,7 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed issue with Twig functions not being properly registered
 - Added twig/twig as a required dependency instead of a suggested one
 - Improved initialization of Twig environment to ensure extensions are properly registered
-
 ## [1.0.6] - 2025-04-30
 
 ### Changed
