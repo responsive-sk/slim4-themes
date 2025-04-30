@@ -96,7 +96,7 @@ class TwigThemeLoader implements ThemeLoaderInterface
      */
     private function loadThemes(): void
     {
-        $themesPath = $this->paths->getRootPath() . '/templates/themes';
+        $themesPath = $this->paths->getTemplatesPath() . '/themes';
         $themeDirectories = glob($themesPath . '/*', GLOB_ONLYDIR);
 
         // Get default theme from settings
