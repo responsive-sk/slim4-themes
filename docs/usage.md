@@ -20,7 +20,11 @@ $container->set(Slim4\Themes\Interface\ThemeInterface::class, function (Containe
 
 $container->set(Slim4\Themes\Interface\ThemeLoaderInterface::class, function (ContainerInterface $container) {
     return new Slim4\Themes\Twig\TwigThemeLoader(
-        $container->get(Slim4\Root\PathsInterface::class)
+        $container->get(Slim4\Root\PathsInterface::class),
+        [
+            'default' => 'default',
+            'available' => ['default', 'dark', 'blue', 'green', 'light']
+        ]
     );
 });
 
@@ -56,20 +60,22 @@ use Psr\Http\Message\ServerRequestInterface;
 class HomeController
 {
     private ThemeRendererInterface $themeRenderer;
-    
+
     public function __construct(ThemeRendererInterface $themeRenderer)
     {
         $this->themeRenderer = $themeRenderer;
     }
-    
+
     public function index(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         $data = [
             'title' => 'Home',
             'content' => 'Welcome to the home page!',
         ];
-        
-        return $this->themeRenderer->renderResponse($response, 'home.twig', $data);
+
+        $html = $this->themeRenderer->render('home/index.twig', $data);
+        $response->getBody()->write($html);
+        return $response;
     }
 }
 ```
@@ -81,14 +87,14 @@ In your templates, you can access the theme object and use the Slim functions:
 #### Twig
 
 ```twig
-{% extends "layout.twig" %}
+{% extends "layout/default.twig" %}
 
 {% block content %}
     <h1>{{ title }}</h1>
     <p>{{ content }}</p>
-    
+
     <p>Current theme: {{ theme.name }}</p>
-    
+
     <a href="{{ url_for('home') }}">Home</a>
     <a href="{{ url_for('about') }}">About</a>
 {% endblock %}
@@ -97,14 +103,14 @@ In your templates, you can access the theme object and use the Slim functions:
 #### Latte
 
 ```latte
-{extends "layout.latte"}
+{extends "layout/default.latte"}
 
 {block content}
     <h1>{$title}</h1>
     <p>{$content}</p>
-    
+
     <p>Current theme: {$theme->getName()}</p>
-    
+
     <a href="{url_for('home')}">Home</a>
     <a href="{url_for('about')}">About</a>
 {/block}
@@ -132,21 +138,21 @@ class ThemeSwitcherController
 {
     private ThemeLoaderInterface $themeLoader;
     private ThemeRendererInterface $themeRenderer;
-    
+
     public function __construct(ThemeLoaderInterface $themeLoader, ThemeRendererInterface $themeRenderer)
     {
         $this->themeLoader = $themeLoader;
         $this->themeRenderer = $themeRenderer;
     }
-    
+
     public function switchTheme(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $themeName = $args['theme'] ?? 'default';
-        
+
         try {
             $theme = $this->themeLoader->load($themeName);
             $this->themeRenderer->setTheme($theme);
-            
+
             // Set cookie
             $response = $response->withHeader(
                 'Set-Cookie',
@@ -155,7 +161,7 @@ class ThemeSwitcherController
                     $themeName
                 )
             );
-            
+
             // Redirect to home page
             return $response->withHeader('Location', '/')->withStatus(302);
         } catch (ThemeNotFoundException $e) {
@@ -176,16 +182,16 @@ use Slim4\Themes\Resolver\ThemeResolver;
 class TemplateController
 {
     private ThemeResolver $themeResolver;
-    
+
     public function __construct(ThemeResolver $themeResolver)
     {
         $this->themeResolver = $themeResolver;
     }
-    
+
     public function getTemplatePath(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $template = $args['template'] ?? 'home.twig';
-        
+
         try {
             $templatePath = $this->themeResolver->resolveTemplate($template);
             $response->getBody()->write($templatePath);
@@ -195,21 +201,21 @@ class TemplateController
             return $response->withStatus(404);
         }
     }
-    
+
     public function getCurrentTheme(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         $theme = $this->themeResolver->getCurrentTheme();
         $response->getBody()->write($theme->getName());
         return $response;
     }
-    
+
     public function getAvailableThemes(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         $themes = $this->themeResolver->getAvailableThemes();
         $themeNames = array_map(function ($theme) {
             return $theme->getName();
         }, $themes);
-        
+
         $response->getBody()->write(json_encode($themeNames));
         return $response->withHeader('Content-Type', 'application/json');
     }
@@ -226,18 +232,18 @@ use Slim4\Themes\Interface\ThemeRendererInterface;
 class GlobalVariablesController
 {
     private ThemeRendererInterface $themeRenderer;
-    
+
     public function __construct(ThemeRendererInterface $themeRenderer)
     {
         $this->themeRenderer = $themeRenderer;
     }
-    
+
     public function addGlobalVariables(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         $this->themeRenderer->addGlobal('app_name', 'My App');
         $this->themeRenderer->addGlobal('app_version', '1.0.0');
         $this->themeRenderer->addGlobal('app_author', 'Your Name');
-        
+
         $response->getBody()->write('Global variables added');
         return $response;
     }

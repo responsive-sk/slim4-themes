@@ -109,7 +109,7 @@ $app->get('/', function ($request, $response) use ($container) {
         'content' => 'Welcome to the home page!',
     ];
 
-    $html = $themeRenderer->render('home.twig', $data);
+    $html = $themeRenderer->render('home/index.twig', $data);
     $response->getBody()->write($html);
     return $response;
 })->setName('home');
@@ -122,7 +122,7 @@ $app->get('/about', function ($request, $response) use ($container) {
         'content' => 'This is the about page.',
     ];
 
-    $html = $themeRenderer->render('about.twig', $data);
+    $html = $themeRenderer->render('home/about.twig', $data);
     $response->getBody()->write($html);
     return $response;
 })->setName('about');

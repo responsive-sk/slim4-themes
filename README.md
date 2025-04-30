@@ -32,7 +32,11 @@ $container->set(Slim4\Themes\Interface\ThemeInterface::class, function (Containe
 
 $container->set(Slim4\Themes\Interface\ThemeLoaderInterface::class, function (ContainerInterface $container) {
     return new Slim4\Themes\Twig\TwigThemeLoader(
-        __DIR__ . '/templates'
+        $container->get(Slim4\Root\PathsInterface::class),
+        [
+            'default' => 'default',
+            'available' => ['default', 'dark', 'blue', 'green', 'light']
+        ]
     );
 });
 
@@ -75,7 +79,9 @@ class HomeController
             'content' => 'Welcome to the home page!',
         ];
 
-        return $this->themeRenderer->renderResponse($response, 'home.twig', $data);
+        $html = $this->themeRenderer->render('home/index.twig', $data);
+        $response->getBody()->write($html);
+        return $response;
     }
 }
 ```
