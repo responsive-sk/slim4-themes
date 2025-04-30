@@ -1,12 +1,13 @@
 {
-    "name": "slim4/themes",
+    "name": "responsive-sk/slim4-themes",
     "description": "Theme system for Slim 4 applications",
     "type": "library",
     "license": "MIT",
     "authors": [
         {
-            "name": "Your Name",
-            "email": "your.email@example.com"
+            "name": "responsive.sk Team",
+            "email": "info@responsive.sk",
+            "homepage": "https://responsive.sk"
         }
     ],
     "require": {
