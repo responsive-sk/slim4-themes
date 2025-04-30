@@ -15,27 +15,27 @@ class TwigTheme implements ThemeInterface
      * @var string The name of the theme
      */
     private string $name;
-    
+
     /**
      * @var string The path to the theme
      */
     private string $path;
-    
+
     /**
      * @var bool Whether this is the default theme
      */
     private bool $isDefault;
-    
+
     /**
      * @var string|null The parent theme name
      */
     private ?string $parentTheme;
-    
+
     /**
      * @var array The theme configuration
      */
     private array $config;
-    
+
     /**
      * Constructor.
      *
@@ -58,7 +58,7 @@ class TwigTheme implements ThemeInterface
         $this->parentTheme = $parentTheme;
         $this->config = $config;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -66,7 +66,7 @@ class TwigTheme implements ThemeInterface
     {
         return $this->name;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -74,7 +74,7 @@ class TwigTheme implements ThemeInterface
     {
         return $this->path;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -82,7 +82,7 @@ class TwigTheme implements ThemeInterface
     {
         return $this->isDefault;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -90,7 +90,7 @@ class TwigTheme implements ThemeInterface
     {
         return $this->parentTheme;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -98,15 +98,15 @@ class TwigTheme implements ThemeInterface
     {
         return $this->path . '/assets';
     }
-    
+
     /**
      * {@inheritdoc}
      */
     public function getTemplatesPath(): string
     {
-        return $this->path . '/templates';
+        return $this->path;
     }
-    
+
     /**
      * {@inheritdoc}
      */
