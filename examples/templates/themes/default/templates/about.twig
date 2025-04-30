@@ -1,0 +1,14 @@
+{% extends "layout.twig" %}
+
+{% block content %}
+    <h1>{{ title }}</h1>
+    <p>{{ content }}</p>
+    
+    <p>Current theme: {{ theme.name }}</p>
+    
+    <p>Try switching themes:</p>
+    <ul>
+        <li><a href="{{ url_for('about') }}?theme=default">Default Theme</a></li>
+        <li><a href="{{ url_for('about') }}?theme=dark">Dark Theme</a></li>
+    </ul>
+{% endblock %}
