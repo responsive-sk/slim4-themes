@@ -23,27 +23,27 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
      * @var Environment The Twig environment
      */
     private Environment $twig;
-    
+
     /**
      * @var ThemeInterface The current theme
      */
     private ThemeInterface $theme;
-    
+
     /**
      * @var array The global variables
      */
     private array $globals = [];
-    
+
     /**
      * @var RouteParserInterface The route parser
      */
     private RouteParserInterface $routeParser;
-    
+
     /**
      * @var bool Whether the Slim extension has been added
      */
     private bool $slimExtensionAdded = false;
-    
+
     /**
      * Constructor.
      *
@@ -56,7 +56,7 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
         $this->routeParser = $routeParser;
         $this->initializeTwig();
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -65,7 +65,7 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
         $this->theme = $theme;
         $this->initializeTwig();
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -73,7 +73,7 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
     {
         return $this->theme;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -82,14 +82,14 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
         if (!$this->templateExists($template)) {
             throw new TemplateNotFoundException($template, $this->theme->getName());
         }
-        
+
         // Add theme to data
         $data['theme'] = $this->theme;
-        
+
         // Render template
         return $this->twig->render($template, $data);
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -98,17 +98,17 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
         if (!$this->templateExists($template)) {
             throw new TemplateNotFoundException($template, $this->theme->getName());
         }
-        
+
         // Add theme to data
         $data['theme'] = $this->theme;
-        
+
         // Render template
         $content = $this->twig->render($template, $data);
         $response->getBody()->write($content);
-        
+
         return $response;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -121,7 +121,7 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
             return false;
         }
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -130,10 +130,10 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
         if (!$this->templateExists($template)) {
             throw new TemplateNotFoundException($template, $this->theme->getName());
         }
-        
+
         return $this->theme->getTemplatesPath() . '/' . $template;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -142,7 +142,7 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
         $this->globals[$name] = $value;
         $this->twig->addGlobal($name, $value);
     }
-    
+
     /**
      * Initialize Twig.
      *
@@ -151,21 +151,21 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
     private function initializeTwig(): void
     {
         // Create Twig loader
-        $loader = new FilesystemLoader([$this->theme->getTemplatesPath()]);
-        
+        $loader = new FilesystemLoader([$this->theme->getPath()]);
+
         // Create Twig environment
         $this->twig = new Environment($loader, [
             'cache' => false,
             'debug' => true,
             'auto_reload' => true,
         ]);
-        
+
         // Add Slim extension if not already added
         if (!$this->slimExtensionAdded) {
             $this->twig->addExtension(new SlimTwigExtension($this->routeParser));
             $this->slimExtensionAdded = true;
         }
-        
+
         // Add globals
         foreach ($this->globals as $name => $value) {
             $this->twig->addGlobal($name, $value);
