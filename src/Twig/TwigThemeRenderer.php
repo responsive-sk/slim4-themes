@@ -13,6 +13,8 @@ use Slim4\Themes\Interface\ThemeResponseInterface;
 use Twig\Environment;
 use Twig\Error\LoaderError;
 use Twig\Loader\FilesystemLoader;
+use Slim4\Vite\ViteService;
+use Slim4\Vite\TwigExtension as ViteTwigExtension;
 
 /**
  * Twig implementation of ThemeRendererInterface.
@@ -40,6 +42,11 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
     private RouteParserInterface $routeParser;
 
     /**
+     * @var ViteService|null The Vite service
+     */
+    private ?ViteService $viteService = null;
+
+    /**
      * @var bool Whether the Slim extension has been added
      * @phpstan-ignore-next-line
      */
@@ -50,11 +57,13 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
      *
      * @param ThemeInterface $theme The theme
      * @param RouteParserInterface $routeParser The route parser
+     * @param ViteService|null $viteService The Vite service
      */
-    public function __construct(ThemeInterface $theme, RouteParserInterface $routeParser)
+    public function __construct(ThemeInterface $theme, RouteParserInterface $routeParser, ?ViteService $viteService = null)
     {
         $this->theme = $theme;
         $this->routeParser = $routeParser;
+        $this->viteService = $viteService;
         $this->initializeTwig();
     }
 
@@ -138,6 +147,8 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
             throw new TemplateNotFoundException($template, $this->theme->getName());
         }
 
+        // Return the template path without adding a slash
+        // The template path should already be complete from the configuration
         return $this->theme->getTemplatesPath() . '/' . $template;
     }
 
@@ -170,6 +181,11 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
         // Always add Slim extension to ensure it's properly registered
         $this->twig->addExtension(new SlimTwigExtension($this->routeParser));
         $this->slimExtensionAdded = true;
+
+        // Add Vite extension if Vite service is available
+        if ($this->viteService !== null) {
+            $this->twig->addExtension(new ViteTwigExtension($this->viteService));
+        }
 
         // Add globals
         foreach ($this->globals as $name => $value) {
