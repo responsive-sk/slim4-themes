@@ -1,6 +1,7 @@
 {
     "name": "responsive-sk/slim4-themes",
     "description": "Theme system for Slim 4 applications",
+    "version": "1.2.0",
     "type": "library",
     "license": "MIT",
     "authors": [

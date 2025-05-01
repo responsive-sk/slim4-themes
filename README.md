@@ -4,10 +4,11 @@ A flexible theme system for Slim 4 applications.
 
 ## Features
 
-- Support for multiple template engines (Plates, Twig, Latte)
+- Support for multiple template engines (Plates, Twig, Latte, Blade)
 - Easy theme switching
 - Theme inheritance
 - Engine-specific configuration
+- Vite integration for all template engines
 - PSR-7 compatible
 - Singleton attribute for dependency injection
 
@@ -75,7 +76,7 @@ $settings = [
         'available' => ['default', 'dark'],
         'cookie_name' => 'theme',
         'query_param' => 'theme',
-        'engine' => 'plates', // Available: 'plates', 'latte', 'twig'
+        'engine' => 'plates', // Available: 'plates', 'twig', 'latte', 'blade'
         'templates_path' => 'templates', // Custom path to templates directory
 
         // Engine-specific settings
@@ -94,6 +95,11 @@ $settings = [
                 'templates_path' => 'templates/twig', // Complete path to Twig templates directory
                 'cookie_name' => 'twig_theme',
                 'query_param' => 'twig_theme',
+            ],
+            'blade' => [
+                'templates_path' => 'templates/blade', // Complete path to Blade templates directory
+                'cookie_name' => 'blade_theme',
+                'query_param' => 'blade_theme',
             ],
         ],
     ],
