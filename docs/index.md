@@ -22,29 +22,33 @@ composer require responsive-sk/slim4-themes
 ### Basic Configuration
 
 ```php
+// Settings
+$settings = [
+    'theme' => [
+        'default' => 'default',
+        'available' => ['default', 'dark'],
+        'cookie_name' => 'theme',
+        'query_param' => 'theme',
+        'engine' => 'plates', // Available: 'plates', 'latte', 'twig'
+        'templates_path' => 'templates', // Custom path to templates directory
+    ],
+];
+
 // Register theme services
-$container->set(Slim4\Themes\Interface\ThemeInterface::class, function (ContainerInterface $container) {
-    return new Slim4\Themes\Twig\TwigTheme(
-        'default',
-        __DIR__ . '/templates/themes/default',
-        true
+$container->set(Slim4\Themes\Interface\ThemeLoaderInterface::class, function (ContainerInterface $container) use ($settings) {
+    return new Slim4\Themes\Plates\PlatesThemeLoader(
+        $container->get(Slim4\Root\PathsInterface::class),
+        $settings['theme']
     );
 });
 
-$container->set(Slim4\Themes\Interface\ThemeLoaderInterface::class, function (ContainerInterface $container) {
-    return new Slim4\Themes\Twig\TwigThemeLoader(
-        $container->get(Slim4\Root\PathsInterface::class),
-        [
-            'default' => 'default',
-            'available' => ['default', 'dark', 'blue', 'green', 'light']
-        ]
-    );
+$container->set(Slim4\Themes\Interface\ThemeInterface::class, function (ContainerInterface $container) {
+    return $container->get(Slim4\Themes\Interface\ThemeLoaderInterface::class)->getDefaultTheme();
 });
 
 $container->set(Slim4\Themes\Interface\ThemeRendererInterface::class, function (ContainerInterface $container) {
-    return new Slim4\Themes\Twig\TwigThemeRenderer(
-        $container->get(Slim4\Themes\Interface\ThemeInterface::class),
-        $container->get(Slim\Interfaces\RouteParserInterface::class)
+    return new Slim4\Themes\Plates\PlatesThemeRenderer(
+        $container->get(Slim4\Themes\Interface\ThemeInterface::class)
     );
 });
 
@@ -52,9 +56,46 @@ $container->set(Slim4\Themes\Interface\ThemeRendererInterface::class, function (
 $app->add(new Slim4\Themes\Middleware\ThemeMiddleware(
     $container->get(Slim4\Themes\Interface\ThemeLoaderInterface::class),
     $container->get(Slim4\Themes\Interface\ThemeRendererInterface::class),
-    'theme',
-    'theme'
+    $settings['theme']['cookie_name'] ?? 'theme',
+    $settings['theme']['query_param'] ?? 'theme'
 ));
+```
+
+### Engine-specific Configuration
+
+You can configure each template engine separately:
+
+```php
+// Settings with engine-specific configuration
+$settings = [
+    'theme' => [
+        'default' => 'default',
+        'available' => ['default', 'dark'],
+        'cookie_name' => 'theme',
+        'query_param' => 'theme',
+        'engine' => 'plates', // Available: 'plates', 'latte', 'twig'
+        'templates_path' => 'templates', // Custom path to templates directory
+
+        // Engine-specific settings
+        'engines' => [
+            'plates' => [
+                'templates_path' => 'templates/plates', // Complete path to Plates templates directory
+                'cookie_name' => 'plates_theme',
+                'query_param' => 'plates_theme',
+            ],
+            'latte' => [
+                'templates_path' => 'templates/latte', // Complete path to Latte templates directory
+                'cookie_name' => 'latte_theme',
+                'query_param' => 'latte_theme',
+            ],
+            'twig' => [
+                'templates_path' => 'templates/twig', // Complete path to Twig templates directory
+                'cookie_name' => 'twig_theme',
+                'query_param' => 'twig_theme',
+            ],
+        ],
+    ],
+];
 ```
 
 ### Using with PHP-DI
@@ -62,26 +103,47 @@ $app->add(new Slim4\Themes\Middleware\ThemeMiddleware(
 ```php
 return [
     // Themes
-    Slim4\Themes\Interface\ThemeInterface::class => function (ContainerInterface $container) {
-        return new Slim4\Themes\Twig\TwigTheme(
-            'default',
-            $container->get('settings')['templates']['themes'] . '/default',
-            true
-        );
+    Slim4\Themes\Interface\ThemeLoaderInterface::class => function (ContainerInterface $container) {
+        $settings = $container->get('settings')['theme'];
+        $engine = $settings['engine'] ?? 'plates';
+
+        return match ($engine) {
+            'twig' => new Slim4\Themes\Twig\TwigThemeLoader(
+                $container->get(Slim4\Root\PathsInterface::class),
+                $settings
+            ),
+            'latte' => new Slim4\Themes\Latte\LatteThemeLoader(
+                $container->get(Slim4\Root\PathsInterface::class),
+                $settings
+            ),
+            default => new Slim4\Themes\Plates\PlatesThemeLoader(
+                $container->get(Slim4\Root\PathsInterface::class),
+                $settings
+            ),
+        };
     },
 
-    Slim4\Themes\Interface\ThemeLoaderInterface::class => function (ContainerInterface $container) {
-        return new Slim4\Themes\Twig\TwigThemeLoader(
-            $container->get(Slim4\Root\PathsInterface::class),
-            $container->get('settings')['theme'] ?? []
-        );
+    Slim4\Themes\Interface\ThemeInterface::class => function (ContainerInterface $container) {
+        return $container->get(Slim4\Themes\Interface\ThemeLoaderInterface::class)->getDefaultTheme();
     },
 
     Slim4\Themes\Interface\ThemeRendererInterface::class => function (ContainerInterface $container) {
-        return new Slim4\Themes\Twig\TwigThemeRenderer(
-            $container->get(Slim4\Themes\Interface\ThemeInterface::class),
-            $container->get(Slim\Interfaces\RouteParserInterface::class)
-        );
+        $settings = $container->get('settings')['theme'];
+        $engine = $settings['engine'] ?? 'plates';
+
+        return match ($engine) {
+            'twig' => new Slim4\Themes\Twig\TwigThemeRenderer(
+                $container->get(Slim4\Themes\Interface\ThemeInterface::class),
+                $container->get(Slim\Interfaces\RouteParserInterface::class)
+            ),
+            'latte' => new Slim4\Themes\Latte\LatteThemeRenderer(
+                $container->get(Slim4\Themes\Interface\ThemeInterface::class),
+                $container->get(Slim\Interfaces\RouteParserInterface::class)
+            ),
+            default => new Slim4\Themes\Plates\PlatesThemeRenderer(
+                $container->get(Slim4\Themes\Interface\ThemeInterface::class)
+            ),
+        };
     },
 ];
 ```
@@ -139,7 +201,8 @@ class HomeController
             'content' => 'Welcome to the home page!',
         ];
 
-        $html = $this->themeRenderer->render('home.twig', $data);
+        // Note: No need to specify file extension (.php, .twig, .latte)
+        $html = $this->themeRenderer->render('home', $data);
         $response->getBody()->write($html);
         return $response;
     }
@@ -246,6 +309,8 @@ class CustomTheme implements ThemeInterface
 
     public function getTemplatesPath(): string
     {
+        // Return the path to the templates directory
+        // This should be the complete path without adding '/templates'
         return $this->path;
     }
 
@@ -391,6 +456,7 @@ class CustomThemeRenderer implements ThemeRendererInterface, ThemeResponseInterf
 
     public function getTemplatePath(string $template): string
     {
+        // The template path should already be complete from the configuration
         $templatePath = $this->theme->getTemplatesPath() . '/' . $template;
 
         if (!file_exists($templatePath)) {
