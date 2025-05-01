@@ -47,8 +47,8 @@ class SlimTwigExtension extends AbstractExtension
      * Get URL for a named route.
      *
      * @param string $routeName The route name
-     * @param array $data The route data
-     * @param array $queryParams The query parameters
+     * @param array<string, mixed> $data The route data
+     * @param array<string, mixed> $queryParams The query parameters
      * @return string The URL
      */
     public function urlFor(string $routeName, array $data = [], array $queryParams = []): string
@@ -60,16 +60,15 @@ class SlimTwigExtension extends AbstractExtension
      * Get full URL for a named route.
      *
      * @param string $routeName The route name
-     * @param array $data The route data
-     * @param array $queryParams The query parameters
+     * @param array<string, mixed> $data The route data
+     * @param array<string, mixed> $queryParams The query parameters
      * @return string The full URL
      */
     public function fullUrlFor(string $routeName, array $data = [], array $queryParams = []): string
     {
-        $uri = new Uri(
-            'http',
-            isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost'
-        );
+        // Create a URI instance using Nyholm PSR-7 implementation
+        $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
+        $uri = new \Nyholm\Psr7\Uri('http://' . $host);
 
         return $this->routeParser->fullUrlFor($uri, $routeName, $data, $queryParams);
     }

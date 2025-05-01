@@ -18,24 +18,24 @@ interface ThemeRendererInterface
      * @return void
      */
     public function setTheme(ThemeInterface $theme): void;
-    
+
     /**
      * Get the current theme.
      *
      * @return ThemeInterface The current theme
      */
     public function getTheme(): ThemeInterface;
-    
+
     /**
      * Render a template with the given data.
      *
      * @param string $template The template to render
-     * @param array $data The data to pass to the template
+     * @param array<string, mixed> $data The data to pass to the template
      * @return string The rendered template
      * @throws TemplateNotFoundException If the template is not found
      */
     public function render(string $template, array $data = []): string;
-    
+
     /**
      * Check if a template exists.
      *
@@ -43,7 +43,7 @@ interface ThemeRendererInterface
      * @return bool True if the template exists
      */
     public function templateExists(string $template): bool;
-    
+
     /**
      * Get the path to a template.
      *
@@ -52,7 +52,7 @@ interface ThemeRendererInterface
      * @throws TemplateNotFoundException If the template is not found
      */
     public function getTemplatePath(string $template): string;
-    
+
     /**
      * Add a global variable.
      *

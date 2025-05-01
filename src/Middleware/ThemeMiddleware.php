@@ -21,22 +21,22 @@ class ThemeMiddleware implements MiddlewareInterface
      * @var ThemeLoaderInterface The theme loader
      */
     private ThemeLoaderInterface $themeLoader;
-    
+
     /**
      * @var ThemeRendererInterface The theme renderer
      */
     private ThemeRendererInterface $themeRenderer;
-    
+
     /**
      * @var string The cookie name
      */
     private string $cookieName;
-    
+
     /**
      * @var string The query parameter name
      */
     private string $queryParam;
-    
+
     /**
      * Constructor.
      *
@@ -56,7 +56,7 @@ class ThemeMiddleware implements MiddlewareInterface
         $this->cookieName = $cookieName;
         $this->queryParam = $queryParam;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -65,13 +65,13 @@ class ThemeMiddleware implements MiddlewareInterface
         // Get theme from query parameter
         $queryParams = $request->getQueryParams();
         $themeName = $queryParams[$this->queryParam] ?? null;
-        
+
         // Get theme from cookie if not in query parameter
         if ($themeName === null) {
             $cookies = $request->getCookieParams();
             $themeName = $cookies[$this->cookieName] ?? null;
         }
-        
+
         // Get default theme if no theme is specified
         if ($themeName === null) {
             $theme = $this->themeLoader->getDefaultTheme();
@@ -84,16 +84,16 @@ class ThemeMiddleware implements MiddlewareInterface
                 $theme = $this->themeLoader->getDefaultTheme();
             }
         }
-        
+
         // Set theme in renderer
         $this->themeRenderer->setTheme($theme);
-        
+
         // Add theme to request attributes
         $request = $request->withAttribute('theme', $theme);
-        
+
         // Process request
         $response = $handler->handle($request);
-        
+
         // Set theme cookie if theme is specified in query parameter
         if (isset($queryParams[$this->queryParam])) {
             $response = $response->withHeader(
@@ -105,7 +105,7 @@ class ThemeMiddleware implements MiddlewareInterface
                 )
             );
         }
-        
+
         return $response;
     }
 }

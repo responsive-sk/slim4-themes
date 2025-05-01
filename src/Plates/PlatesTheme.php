@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Slim4\Themes\Twig;
+namespace Slim4\Themes\Plates;
 
 use Slim4\Themes\Interface\ThemeInterface;
 
 /**
- * Twig implementation of ThemeInterface.
+ * Plates implementation of ThemeInterface.
  */
-class TwigTheme implements ThemeInterface
+class PlatesTheme implements ThemeInterface
 {
     /**
      * @var string The name of the theme
@@ -104,7 +104,7 @@ class TwigTheme implements ThemeInterface
      */
     public function getTemplatesPath(): string
     {
-        return $this->path;
+        return $this->path . '/templates';
     }
 
     /**

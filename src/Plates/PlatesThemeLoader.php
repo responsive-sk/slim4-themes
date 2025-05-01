@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Slim4\Themes\Twig;
+namespace Slim4\Themes\Plates;
 
 use Slim4\Root\PathsInterface;
 use Slim4\Themes\Attributes\Singleton;
@@ -11,10 +11,10 @@ use Slim4\Themes\Interface\ThemeInterface;
 use Slim4\Themes\Interface\ThemeLoaderInterface;
 
 /**
- * Twig implementation of ThemeLoaderInterface.
+ * Plates implementation of ThemeLoaderInterface.
  */
 #[Singleton]
-class TwigThemeLoader implements ThemeLoaderInterface
+class PlatesThemeLoader implements ThemeLoaderInterface
 {
     /**
      * @var PathsInterface The paths
@@ -99,7 +99,7 @@ class TwigThemeLoader implements ThemeLoaderInterface
      */
     private function loadThemes(): void
     {
-        $themesPath = $this->paths->getTemplatesPath() . '/themes';
+        $themesPath = $this->paths->getTemplatesPath() . '/plates';
         $themeDirectories = glob($themesPath . '/*', GLOB_ONLYDIR) ?: [];
 
         // Get default theme from settings
@@ -133,7 +133,7 @@ class TwigThemeLoader implements ThemeLoaderInterface
                 }
             }
 
-            $theme = new TwigTheme(
+            $theme = new PlatesTheme(
                 $themeName,
                 $themeDirectory,
                 $isDefault,
@@ -151,7 +151,7 @@ class TwigThemeLoader implements ThemeLoaderInterface
         // If no default theme is set, use the first theme
         if ($this->defaultTheme === null && !empty($this->themes)) {
             $this->defaultTheme = array_key_first($this->themes);
-            $this->themes[$this->defaultTheme] = new TwigTheme(
+            $this->themes[$this->defaultTheme] = new PlatesTheme(
                 $this->defaultTheme,
                 $this->themes[$this->defaultTheme]->getPath(),
                 true,

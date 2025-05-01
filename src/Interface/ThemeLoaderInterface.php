@@ -19,14 +19,14 @@ interface ThemeLoaderInterface
      * @throws ThemeNotFoundException If the theme is not found
      */
     public function load(string $themeName): ThemeInterface;
-    
+
     /**
      * Get all available themes.
      *
      * @return ThemeInterface[] The available themes
      */
     public function getAvailableThemes(): array;
-    
+
     /**
      * Get the default theme.
      *
@@ -34,7 +34,7 @@ interface ThemeLoaderInterface
      * @throws ThemeNotFoundException If no default theme is found
      */
     public function getDefaultTheme(): ThemeInterface;
-    
+
     /**
      * Check if a theme exists.
      *

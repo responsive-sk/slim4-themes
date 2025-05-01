@@ -15,27 +15,27 @@ class LatteTheme implements ThemeInterface
      * @var string The name of the theme
      */
     private string $name;
-    
+
     /**
      * @var string The path to the theme
      */
     private string $path;
-    
+
     /**
      * @var bool Whether this is the default theme
      */
     private bool $isDefault;
-    
+
     /**
      * @var string|null The parent theme name
      */
     private ?string $parentTheme;
-    
+
     /**
-     * @var array The theme configuration
+     * @var array<string, mixed> The theme configuration
      */
     private array $config;
-    
+
     /**
      * Constructor.
      *
@@ -43,7 +43,7 @@ class LatteTheme implements ThemeInterface
      * @param string $path The path to the theme
      * @param bool $isDefault Whether this is the default theme
      * @param string|null $parentTheme The parent theme name
-     * @param array $config The theme configuration
+     * @param array<string, mixed> $config The theme configuration
      */
     public function __construct(
         string $name,
@@ -58,7 +58,7 @@ class LatteTheme implements ThemeInterface
         $this->parentTheme = $parentTheme;
         $this->config = $config;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -66,7 +66,7 @@ class LatteTheme implements ThemeInterface
     {
         return $this->name;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -74,7 +74,7 @@ class LatteTheme implements ThemeInterface
     {
         return $this->path;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -82,7 +82,7 @@ class LatteTheme implements ThemeInterface
     {
         return $this->isDefault;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -90,7 +90,7 @@ class LatteTheme implements ThemeInterface
     {
         return $this->parentTheme;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -98,7 +98,7 @@ class LatteTheme implements ThemeInterface
     {
         return $this->path . '/assets';
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -106,7 +106,7 @@ class LatteTheme implements ThemeInterface
     {
         return $this->path . '/templates';
     }
-    
+
     /**
      * {@inheritdoc}
      */

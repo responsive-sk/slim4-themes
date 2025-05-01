@@ -30,7 +30,7 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
     private ThemeInterface $theme;
 
     /**
-     * @var array The global variables
+     * @var array<string, mixed> The global variables
      */
     private array $globals = [];
 
@@ -41,6 +41,7 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
 
     /**
      * @var bool Whether the Slim extension has been added
+     * @phpstan-ignore-next-line
      */
     private bool $slimExtensionAdded = false;
 
@@ -77,6 +78,9 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
     /**
      * {@inheritdoc}
      */
+    /**
+     * @param array<string, mixed> $data
+     */
     public function render(string $template, array $data = []): string
     {
         if (!$this->templateExists($template)) {
@@ -92,6 +96,9 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
 
     /**
      * {@inheritdoc}
+     */
+    /**
+     * @param array<string, mixed> $data
      */
     public function renderResponse(ResponseInterface $response, string $template, array $data = []): ResponseInterface
     {

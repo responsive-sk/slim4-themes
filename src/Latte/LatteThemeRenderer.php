@@ -22,27 +22,27 @@ class LatteThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfa
      * @var Engine The Latte engine
      */
     private Engine $latte;
-    
+
     /**
      * @var ThemeInterface The current theme
      */
     private ThemeInterface $theme;
-    
+
     /**
-     * @var array The global variables
+     * @var array<string, mixed> The global variables
      */
     private array $globals = [];
-    
+
     /**
      * @var RouteParserInterface The route parser
      */
     private RouteParserInterface $routeParser;
-    
+
     /**
      * @var bool Whether the Slim functions have been added
      */
     private bool $slimFunctionsAdded = false;
-    
+
     /**
      * Constructor.
      *
@@ -56,7 +56,7 @@ class LatteThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfa
         $this->latte = new Engine();
         $this->initializeLatte();
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -65,7 +65,7 @@ class LatteThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfa
         $this->theme = $theme;
         $this->initializeLatte();
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -73,52 +73,58 @@ class LatteThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfa
     {
         return $this->theme;
     }
-    
+
     /**
      * {@inheritdoc}
+     */
+    /**
+     * @param array<string, mixed> $data
      */
     public function render(string $template, array $data = []): string
     {
         if (!$this->templateExists($template)) {
             throw new TemplateNotFoundException($template, $this->theme->getName());
         }
-        
+
         // Add theme to data
         $data['theme'] = $this->theme;
-        
+
         // Add globals to data
         foreach ($this->globals as $name => $value) {
             $data[$name] = $value;
         }
-        
+
         // Render template
         return $this->latte->renderToString($this->getTemplatePath($template), $data);
     }
-    
+
     /**
      * {@inheritdoc}
+     */
+    /**
+     * @param array<string, mixed> $data
      */
     public function renderResponse(ResponseInterface $response, string $template, array $data = []): ResponseInterface
     {
         if (!$this->templateExists($template)) {
             throw new TemplateNotFoundException($template, $this->theme->getName());
         }
-        
+
         // Add theme to data
         $data['theme'] = $this->theme;
-        
+
         // Add globals to data
         foreach ($this->globals as $name => $value) {
             $data[$name] = $value;
         }
-        
+
         // Render template
         $content = $this->latte->renderToString($this->getTemplatePath($template), $data);
         $response->getBody()->write($content);
-        
+
         return $response;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -126,31 +132,31 @@ class LatteThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfa
     {
         return file_exists($this->getTemplatePath($template));
     }
-    
+
     /**
      * {@inheritdoc}
      */
     public function getTemplatePath(string $template): string
     {
         $templatePath = $this->theme->getTemplatesPath() . '/' . $template;
-        
+
         if (!file_exists($templatePath)) {
             // Try parent theme if exists
             if ($this->theme->getParentTheme() !== null) {
                 $parentThemePath = dirname($this->theme->getPath()) . '/' . $this->theme->getParentTheme();
                 $parentTemplatePath = $parentThemePath . '/templates/' . $template;
-                
+
                 if (file_exists($parentTemplatePath)) {
                     return $parentTemplatePath;
                 }
             }
-            
+
             throw new TemplateNotFoundException($template, $this->theme->getName());
         }
-        
+
         return $templatePath;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -158,7 +164,7 @@ class LatteThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfa
     {
         $this->globals[$name] = $value;
     }
-    
+
     /**
      * Initialize Latte.
      *
@@ -168,22 +174,29 @@ class LatteThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfa
     {
         // Set template paths
         $this->latte->setTempDirectory(sys_get_temp_dir() . '/latte');
-        
+
         // In Latte 3.0, we need to use the parameters array when rendering
         // We'll pass the globals when rendering
-        
+
         // Add Slim functions if not already added
         if (!$this->slimFunctionsAdded) {
             // Add Slim functions
-            $this->latte->addFunction('url_for', function (string $routeName, array $data = [], array $queryParams = []) {
+            $this->latte->addFunction('url_for', function (
+                string $routeName,
+                array $data = [],
+                array $queryParams = []
+            ) {
                 return $this->routeParser->urlFor($routeName, $data, $queryParams);
             });
-            
-            $this->latte->addFunction('full_url_for', function (string $routeName, array $data = [], array $queryParams = []) {
-                $uri = new Uri(
-                    'http',
-                    isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost'
-                );
+
+            $this->latte->addFunction('full_url_for', function (
+                string $routeName,
+                array $data = [],
+                array $queryParams = []
+            ) {
+                // Create a URI instance using Nyholm PSR-7 implementation
+                $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
+                $uri = new \Nyholm\Psr7\Uri('http://' . $host);
                 return $this->routeParser->fullUrlFor(
                     $uri,
                     $routeName,
@@ -191,18 +204,18 @@ class LatteThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfa
                     $queryParams
                 );
             });
-            
+
             $this->latte->addFunction('is_current_url', function (string $routeName) {
                 $currentUrl = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
                 $url = $this->routeParser->urlFor($routeName);
-                
+
                 return $currentUrl === $url;
             });
-            
+
             $this->latte->addFunction('current_url', function () {
                 return isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
             });
-            
+
             $this->slimFunctionsAdded = true;
         }
     }

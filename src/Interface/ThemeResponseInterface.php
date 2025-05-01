@@ -17,7 +17,7 @@ interface ThemeResponseInterface
      *
      * @param ResponseInterface $response The response to render to
      * @param string $template The template to render
-     * @param array $data The data to pass to the template
+     * @param array<string, mixed> $data The data to pass to the template
      * @return ResponseInterface The rendered response
      * @throws TemplateNotFoundException If the template is not found
      */

@@ -20,17 +20,17 @@ class LatteThemeLoader implements ThemeLoaderInterface
      * @var PathsInterface The paths
      */
     private PathsInterface $paths;
-    
+
     /**
-     * @var array The loaded themes
+     * @var array<string, ThemeInterface> The loaded themes
      */
     private array $themes = [];
-    
+
     /**
      * @var string|null The default theme name
      */
     private ?string $defaultTheme = null;
-    
+
     /**
      * Constructor.
      *
@@ -41,7 +41,7 @@ class LatteThemeLoader implements ThemeLoaderInterface
         $this->paths = $paths;
         $this->loadThemes();
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -50,18 +50,21 @@ class LatteThemeLoader implements ThemeLoaderInterface
         if (!$this->themeExists($themeName)) {
             throw new ThemeNotFoundException($themeName);
         }
-        
+
         return $this->themes[$themeName];
     }
-    
+
     /**
      * {@inheritdoc}
+     */
+    /**
+     * @return array<int, ThemeInterface>
      */
     public function getAvailableThemes(): array
     {
         return array_values($this->themes);
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -70,10 +73,10 @@ class LatteThemeLoader implements ThemeLoaderInterface
         if ($this->defaultTheme === null) {
             throw new ThemeNotFoundException('default');
         }
-        
+
         return $this->themes[$this->defaultTheme];
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -81,7 +84,7 @@ class LatteThemeLoader implements ThemeLoaderInterface
     {
         return isset($this->themes[$themeName]);
     }
-    
+
     /**
      * Load all themes.
      *
@@ -90,22 +93,27 @@ class LatteThemeLoader implements ThemeLoaderInterface
     private function loadThemes(): void
     {
         $themesPath = $this->paths->getRootPath() . '/templates/themes';
-        $themeDirectories = glob($themesPath . '/*', GLOB_ONLYDIR);
-        
+        $themeDirectories = glob($themesPath . '/*', GLOB_ONLYDIR) ?: [];
+
         foreach ($themeDirectories as $themeDirectory) {
             $themeName = basename($themeDirectory);
             $isDefault = file_exists($themeDirectory . '/.default');
             $parentTheme = null;
             $config = [];
-            
+
             // Load theme configuration
             $configFile = $themeDirectory . '/theme.json';
             if (file_exists($configFile)) {
-                $configData = json_decode(file_get_contents($configFile), true);
-                $parentTheme = $configData['parent'] ?? null;
-                $config = $configData;
+                $configContent = file_get_contents($configFile);
+                if ($configContent !== false) {
+                    $configData = json_decode($configContent, true);
+                    if (is_array($configData)) {
+                        $parentTheme = $configData['parent'] ?? null;
+                        $config = $configData;
+                    }
+                }
             }
-            
+
             $theme = new LatteTheme(
                 $themeName,
                 $themeDirectory,
@@ -113,9 +121,9 @@ class LatteThemeLoader implements ThemeLoaderInterface
                 $parentTheme,
                 $config
             );
-            
+
             $this->themes[$themeName] = $theme;
-            
+
             if ($isDefault) {
                 $this->defaultTheme = $themeName;
             }
