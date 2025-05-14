@@ -205,5 +205,8 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
         foreach ($this->globals as $name => $value) {
             $this->twig->addGlobal($name, $value);
         }
+
+        // Add theme to global variables
+        $this->twig->addGlobal('theme', $this->theme);
     }
 }
