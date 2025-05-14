@@ -37,9 +37,9 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
     private array $globals = [];
 
     /**
-     * @var RouteParserInterface The route parser
+     * @var RouteParserInterface|null The route parser
      */
-    private RouteParserInterface $routeParser;
+    private ?RouteParserInterface $routeParser = null;
 
     /**
      * @var ViteService|null The Vite service
@@ -56,14 +56,26 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
      * Constructor.
      *
      * @param ThemeInterface $theme The theme
-     * @param RouteParserInterface $routeParser The route parser
+     * @param RouteParserInterface|null $routeParser The route parser
      * @param ViteService|null $viteService The Vite service
      */
-    public function __construct(ThemeInterface $theme, RouteParserInterface $routeParser, ?ViteService $viteService = null)
+    public function __construct(ThemeInterface $theme, ?RouteParserInterface $routeParser = null, ?ViteService $viteService = null)
     {
         $this->theme = $theme;
         $this->routeParser = $routeParser;
         $this->viteService = $viteService;
+        $this->initializeTwig();
+    }
+
+    /**
+     * Set the route parser.
+     *
+     * @param RouteParserInterface $routeParser The route parser
+     * @return void
+     */
+    public function setRouteParser(RouteParserInterface $routeParser): void
+    {
+        $this->routeParser = $routeParser;
         $this->initializeTwig();
     }
 
@@ -178,9 +190,11 @@ class TwigThemeRenderer implements ThemeRendererInterface, ThemeResponseInterfac
             'auto_reload' => true,
         ]);
 
-        // Always add Slim extension to ensure it's properly registered
-        $this->twig->addExtension(new SlimTwigExtension($this->routeParser));
-        $this->slimExtensionAdded = true;
+        // Add Slim extension if route parser is available
+        if ($this->routeParser !== null) {
+            $this->twig->addExtension(new SlimTwigExtension($this->routeParser));
+            $this->slimExtensionAdded = true;
+        }
 
         // Add Vite extension if Vite service is available
         if ($this->viteService !== null) {
