@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace Slim4\Themes\Exception;
 
-use RuntimeException;
+use Exception;
 
 /**
- * Exception thrown when a theme is not found.
+ * Exception thrown when a theme could not be found.
  */
-class ThemeNotFoundException extends RuntimeException
+class ThemeNotFoundException extends Exception
 {
     /**
-     * Constructor.
-     *
-     * @param string $themeName The theme name
+     * @param string $themeName The name of the theme that could not be found
+     * @param int $code The exception code
+     * @param \Throwable|null $previous The previous exception
      */
-    public function __construct(string $themeName)
+    public function __construct(string $themeName, int $code = 0, ?\Throwable $previous = null)
     {
-        parent::__construct(sprintf('Theme "%s" not found', $themeName));
+        parent::__construct(sprintf('Theme "%s" could not be found', $themeName), $code, $previous);
     }
 }

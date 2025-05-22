@@ -14,32 +14,31 @@ interface ThemeLoaderInterface
     /**
      * Load a theme by name.
      *
-     * @param string $themeName The name of the theme
-     * @return ThemeInterface The theme
-     * @throws ThemeNotFoundException If the theme is not found
+     * @param string $name The name of the theme to load
+     * @return ThemeInterface The loaded theme
+     * @throws ThemeNotFoundException If the theme could not be found
      */
-    public function load(string $themeName): ThemeInterface;
+    public function load(string $name): ThemeInterface;
 
     /**
-     * Get all available themes.
+     * Get a theme by name.
      *
-     * @return ThemeInterface[] The available themes
+     * @param string $name The name of the theme to get
+     * @return ThemeInterface|null The theme or null if not found
      */
-    public function getAvailableThemes(): array;
+    public function getTheme(string $name): ?ThemeInterface;
 
     /**
      * Get the default theme.
      *
      * @return ThemeInterface The default theme
-     * @throws ThemeNotFoundException If no default theme is found
      */
     public function getDefaultTheme(): ThemeInterface;
 
     /**
-     * Check if a theme exists.
+     * Get all available themes.
      *
-     * @param string $themeName The name of the theme
-     * @return bool True if the theme exists
+     * @return array<string, ThemeInterface> The available themes
      */
-    public function themeExists(string $themeName): bool;
+    public function getThemes(): array;
 }

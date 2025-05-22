@@ -57,4 +57,12 @@ interface ThemeInterface
      * @return array<string, mixed> The theme configuration
      */
     public function getConfig(): array;
+    
+    /**
+     * Get the path to a template file.
+     *
+     * @param string $template The template name
+     * @return string The path to the template file
+     */
+    public function getTemplatePath(string $template): string;
 }

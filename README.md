@@ -1,16 +1,15 @@
 # Slim4 Themes
 
-A flexible theme system for Slim 4 applications.
+Theme handling for Slim 4 applications.
 
-## Features
+## Version 2.0 Changes
 
-- Support for multiple template engines (Plates, Twig, Latte, Blade)
-- Easy theme switching
-- Theme inheritance
-- Engine-specific configuration
-- Vite integration for all template engines
-- PSR-7 compatible
-- Singleton attribute for dependency injection
+Version 2.0 introduces a new approach to theme handling using Dependency Injection (DI) instead of middleware. This provides several advantages:
+
+1. **Separation of concerns**: Theme handling is a cross-cutting concern that should be handled at the container level, not in the HTTP request pipeline.
+2. **Performance**: DI-based theme handling is more efficient because it doesn't require processing the request for every request.
+3. **Flexibility**: DI-based theme handling allows you to use the theme in any part of your application, not just in the HTTP request pipeline.
+4. **Testability**: DI-based theme handling is easier to test because you can mock the theme provider.
 
 ## Installation
 
@@ -20,149 +19,182 @@ composer require responsive-sk/slim4-themes
 
 ## Usage
 
-### Configuration
+### 1. Register the services
 
-#### Basic Configuration
+#### Using PHP-DI
 
 ```php
-// Settings
-$settings = [
-    'theme' => [
-        'default' => 'default',
-        'available' => ['default', 'dark'],
-        'cookie_name' => 'theme',
-        'query_param' => 'theme',
-        'engine' => 'plates', // Available: 'plates', 'latte', 'twig'
-        'templates_path' => 'templates', // Custom path to templates directory
-    ],
-];
+use Slim4\Themes\Provider\ThemeServiceProvider;
+
+// Create container
+$container = new \DI\Container();
 
 // Register theme services
-$container->set(Slim4\Themes\Interface\ThemeLoaderInterface::class, function (ContainerInterface $container) use ($settings) {
-    return new Slim4\Themes\Plates\PlatesThemeLoader(
-        $container->get(Slim4\Root\PathsInterface::class),
-        $settings['theme']
-    );
-});
-
-$container->set(Slim4\Themes\Interface\ThemeInterface::class, function (ContainerInterface $container) {
-    return $container->get(Slim4\Themes\Interface\ThemeLoaderInterface::class)->getDefaultTheme();
-});
-
-$container->set(Slim4\Themes\Interface\ThemeRendererInterface::class, function (ContainerInterface $container) {
-    return new Slim4\Themes\Plates\PlatesThemeRenderer(
-        $container->get(Slim4\Themes\Interface\ThemeInterface::class)
-    );
-});
-
-// Add theme middleware
-$app->add(new Slim4\Themes\Middleware\ThemeMiddleware(
-    $container->get(Slim4\Themes\Interface\ThemeLoaderInterface::class),
-    $container->get(Slim4\Themes\Interface\ThemeRendererInterface::class),
-    $settings['theme']['cookie_name'] ?? 'theme',
-    $settings['theme']['query_param'] ?? 'theme'
-));
+$themeServiceProvider = new ThemeServiceProvider();
+$themeServiceProvider->register($container, [
+    'cookie_name' => 'theme',
+    'query_param' => 'theme',
+]);
 ```
 
-#### Engine-specific Configuration
-
-You can configure each template engine separately:
+#### Using Symfony Container
 
 ```php
-// Settings with engine-specific configuration
-$settings = [
-    'theme' => [
-        'default' => 'default',
-        'available' => ['default', 'dark'],
-        'cookie_name' => 'theme',
-        'query_param' => 'theme',
-        'engine' => 'plates', // Available: 'plates', 'twig', 'latte', 'blade'
-        'templates_path' => 'templates', // Custom path to templates directory
+use Slim4\Themes\Provider\ThemeResolver;
+use Slim4\Themes\Provider\ThemeProvider;
+use Slim4\Themes\Middleware\RequestAwareMiddleware;
+use Slim4\Themes\Interface\ThemeInterface;
+use Slim4\Themes\Interface\ThemeLoaderInterface;
 
-        // Engine-specific settings
-        'engines' => [
-            'plates' => [
-                'templates_path' => 'templates/plates', // Complete path to Plates templates directory
-                'cookie_name' => 'plates_theme',
-                'query_param' => 'plates_theme',
-            ],
-            'latte' => [
-                'templates_path' => 'templates/latte', // Complete path to Latte templates directory
-                'cookie_name' => 'latte_theme',
-                'query_param' => 'latte_theme',
-            ],
-            'twig' => [
-                'templates_path' => 'templates/twig', // Complete path to Twig templates directory
-                'cookie_name' => 'twig_theme',
-                'query_param' => 'twig_theme',
-            ],
-            'blade' => [
-                'templates_path' => 'templates/blade', // Complete path to Blade templates directory
-                'cookie_name' => 'blade_theme',
-                'query_param' => 'blade_theme',
-            ],
-        ],
-    ],
-];
+// Register theme services
+$containerBuilder->register(ThemeResolver::class)
+    ->setArguments([
+        new Reference(ThemeLoaderInterface::class),
+        '%theme.cookie_name%',
+        '%theme.query_param%'
+    ])
+    ->setPublic(true);
+
+$containerBuilder->register(ThemeProvider::class)
+    ->setArguments([new Reference('service_container')])
+    ->setPublic(true);
+
+$containerBuilder->register(RequestAwareMiddleware::class)
+    ->setArguments([
+        new Reference(ThemeProvider::class),
+        '%theme.cookie_name%',
+        '%theme.query_param%'
+    ])
+    ->setPublic(true);
+
+$containerBuilder->setAlias(ThemeInterface::class, ThemeProvider::class)
+    ->setPublic(true);
 ```
 
-### Using in controllers
+### 2. Add the middleware
 
 ```php
-use Slim4\Themes\Interface\ThemeRendererInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
-
-class HomeController
-{
-    private ThemeRendererInterface $themeRenderer;
-
-    public function __construct(ThemeRendererInterface $themeRenderer)
-    {
-        $this->themeRenderer = $themeRenderer;
-    }
-
-    public function index(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        $data = [
-            'title' => 'Home',
-            'content' => 'Welcome to the home page!',
-        ];
-
-        // Note: No need to specify file extension (.php, .twig, .latte)
-        $html = $this->themeRenderer->render('home/index', $data);
-        $response->getBody()->write($html);
-        return $response;
-    }
-}
+// Add middleware
+$app->add($container->get(RequestAwareMiddleware::class));
 ```
 
-## Documentation
+### 3. Use the theme in your application
 
-For more detailed documentation, see the [docs](docs) directory.
+```php
+// Get theme from container
+$theme = $container->get(ThemeInterface::class);
 
-## Examples
-
-Check out the [examples](examples) directory for working examples:
-
-- [Basic Usage](examples/basic-usage.php) - A simple example of how to use the package with Twig.
-- [Multi-Engine Configuration](examples/multi-engine-config.php) - An example of how to configure multiple template engines.
-
-To run the examples, you need to install the package and its dependencies:
-
-```bash
-composer install
+// Use theme
+$templatePath = $theme->getTemplatePath('home.twig');
 ```
 
-Then, you can run the examples using PHP's built-in web server:
+## Components
 
-```bash
-cd examples
-php -S localhost:8000 basic-usage.php
+### ThemeResolver
+
+The `ThemeResolver` class is responsible for resolving the theme based on the request, cookies, or default theme.
+
+```php
+use Slim4\Themes\Provider\ThemeResolver;
+
+// Create theme resolver
+$themeResolver = new ThemeResolver(
+    $themeLoader,
+    'theme',
+    'theme'
+);
+
+// Resolve theme
+$theme = $themeResolver->resolveTheme($request);
 ```
 
-Then, open your browser and navigate to http://localhost:8000.
+### ThemeProvider
+
+The `ThemeProvider` class is responsible for providing the theme from the container.
+
+```php
+use Slim4\Themes\Provider\ThemeProvider;
+
+// Create theme provider
+$themeProvider = new ThemeProvider($container);
+
+// Set request
+$themeProvider->setRequest($request);
+
+// Get theme
+$theme = $themeProvider->getTheme();
+```
+
+### RequestAwareMiddleware
+
+The `RequestAwareMiddleware` class is responsible for making the request available to the `ThemeProvider`.
+
+```php
+use Slim4\Themes\Middleware\RequestAwareMiddleware;
+
+// Create middleware
+$middleware = new RequestAwareMiddleware(
+    $themeProvider,
+    'theme',
+    'theme'
+);
+
+// Add middleware
+$app->add($middleware);
+```
+
+### ThemeServiceProvider
+
+The `ThemeServiceProvider` class is responsible for registering theme services in the container.
+
+```php
+use Slim4\Themes\Provider\ThemeServiceProvider;
+
+// Create service provider
+$serviceProvider = new ThemeServiceProvider();
+
+// Register services
+$serviceProvider->register($container, [
+    'cookie_name' => 'theme',
+    'query_param' => 'theme',
+]);
+```
+
+## Migrating from Version 1.x
+
+If you're migrating from version 1.x, here are the main changes:
+
+1. Replace `ThemeMiddleware` with `RequestAwareMiddleware`:
+
+```php
+// Before
+$app->add($container->get(\Slim4\Themes\Middleware\ThemeMiddleware::class));
+
+// After
+$app->add($container->get(\Slim4\Themes\Middleware\RequestAwareMiddleware::class));
+```
+
+2. Get the theme from the container instead of the request attribute:
+
+```php
+// Before
+$theme = $request->getAttribute('theme');
+
+// After
+$theme = $container->get(\Slim4\Themes\Interface\ThemeInterface::class);
+```
+
+3. Register the new services in your container:
+
+```php
+// Register theme services
+$themeServiceProvider = new \Slim4\Themes\Provider\ThemeServiceProvider();
+$themeServiceProvider->register($container, [
+    'cookie_name' => 'theme',
+    'query_param' => 'theme',
+]);
+```
 
 ## License
 
-This package is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT
